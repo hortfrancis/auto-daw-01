@@ -1,3 +1,5 @@
+import os from 'node:os';
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 import { E2E_PORT } from './e2e/port.ts';
 
@@ -18,7 +20,8 @@ export default defineConfig({
     // closed port on 127.0.0.1 hangs for ~2 minutes instead of being refused,
     // which stalls Playwright's "is the port already in use?" check.
     url: `http://[::1]:${E2E_PORT}/api/health`,
-    env: { PORT: String(E2E_PORT) },
+    // Test renders go to a temp folder, not the repo's renders/.
+    env: { PORT: String(E2E_PORT), RENDERS_DIR: path.join(os.tmpdir(), 'auto-daw-e2e-renders') },
     reuseExistingServer: false,
   },
 });

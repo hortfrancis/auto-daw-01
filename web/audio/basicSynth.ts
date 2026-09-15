@@ -16,13 +16,17 @@ export function playBasicSynthNote(context: BaseAudioContext, destination: Audio
   const filter = new BiquadFilterNode(context, { type: 'lowpass', frequency: 2400, Q: 0.7 });
   const envelope = new GainNode(context, { gain: 0 });
 
+  // The release fades over 9 time constants (to about -96 dB), then the gain is
+  // set to exactly 0 and the oscillator stops, all at scheduled audio times.
+  const silentAt = releaseAt + RELEASE_SECONDS * 3;
   envelope.gain.setValueAtTime(0, time);
   envelope.gain.linearRampToValueAtTime(peak, time + ATTACK_SECONDS);
   envelope.gain.setTargetAtTime(peak * SUSTAIN_LEVEL, time + ATTACK_SECONDS, DECAY_SECONDS / 3);
   envelope.gain.setTargetAtTime(0, releaseAt, RELEASE_SECONDS / 3);
+  envelope.gain.setValueAtTime(0, silentAt);
 
   oscillator.connect(filter).connect(envelope).connect(destination);
   oscillator.start(time);
-  oscillator.stop(releaseAt + RELEASE_SECONDS * 2);
-  oscillator.addEventListener('ended', () => envelope.disconnect());
+  oscillator.stop(silentAt);
+  // No disconnect() needed when the note ends: the browser cleans up finished nodes.
 }

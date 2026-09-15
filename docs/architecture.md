@@ -57,8 +57,9 @@ flowchart LR
     LLM -- "MCP tool calls" --> MCP
     MCP -- "results: text, JSON, images" --> LLM
 
-    Hub <-- "WebSocket: state updates,<br/>edits, render jobs, rendered audio" --> Browser
+    Hub <-- "WebSocket: state updates,<br/>edits, render jobs" --> Browser
     Disk -- "HTTP: sample files" --> Engine
+    Engine -- "HTTP: rendered WAVs" --> Disk
 
     Gen <-- "HTTPS" --> Ext
 
@@ -115,7 +116,7 @@ Decided in spike 4. Tone.js is capable and maintained, but it runs everything th
 - **Timing is unit-tested** without a browser, including a jittery timer, looping and tempo changes.
 - **We only need a few building blocks for now:** oscillators, filters and gain envelopes. We can reconsider for richer synths and effects later.
 
-Live playback and offline rendering build the same audio graph from the same project state. To keep them identical, the engine has to be **deterministic**: every event is scheduled from the project's own timeline (never the wall clock), and anything random uses a stored seed.
+Live playback and offline rendering build the same audio graph from the same project state. To keep them identical, the engine has to be **deterministic**: every event is scheduled from the project's own timeline (never the wall clock), and anything random uses a stored seed. Even so, Chrome doesn't guarantee bit-identical renders once three or more signals mix at one node. [Spike 6](spikes/06-offline-render.md) explains why and how we handle it.
 
 ## Two ways for the LLM to inspect the music
 
@@ -178,9 +179,9 @@ sequenceDiagram
     alt no browser tab connected
         S-->>C: Error: open http://localhost:PORT to enable audio
     else tab connected
-        S->>B: WebSocket: render job + project version
+        S->>B: WebSocket: render job + a copy of the project
         B->>B: OfflineAudioContext renders using the same engine as playback
-        B->>S: WAV data
+        B->>S: HTTP POST /api/renders/:id (the WAV)
         S->>S: Save to renders/, compute levels + spectrogram PNG
         S-->>C: Numbers + waveform and spectrogram images
     end
@@ -209,5 +210,5 @@ sequenceDiagram
 - **Browser autoplay rules.** A tab can't make sound until you've clicked it once. The UI will show an "Enable audio" button. Offline renders might not need that click, but we'll confirm.
 - **Rendering needs a tab.** Editing and symbolic inspection work without a browser, but rendered audio doesn't. Later, the server could launch a headless Chromium (e.g. with Playwright) so Claude can render on its own. It would still be the same browser engine, so the "one engine" rule holds.
 - **Multiple tabs.** All tabs show the same state, but render jobs should go to exactly one tab (e.g. the most recently focused one). Playback has the same issue today: `play` starts every tab with audio enabled, so two tabs sound doubled.
-- **Stale renders.** Each render job carries a project version number, so a render can't mix in changes that arrived halfway through.
+- **Stale renders.** Each render job carries its own copy of the project, so a render can't mix in changes that arrive halfway through.
 - **Scope of the first version.** Synth tracks with MIDI-style note clips, a handful of effects, play/stop, a live-updating UI, symbolic inspection and rendered inspection. Sample clips and external generators come next.

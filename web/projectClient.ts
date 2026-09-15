@@ -1,5 +1,5 @@
 // Keeps this tab in sync with the server over the /ws WebSocket: receives the
-// project and transport commands, and reports this tab's audio status.
+// project and server events (play, stop, render), and sends messages back.
 // A plain module rather than a React hook, so the audio engine can use it
 // without going through React (see docs/architecture.md).
 
@@ -15,11 +15,12 @@ export type ProjectSnapshot = {
   previous?: Project;
 };
 
-export type TransportCommand = Extract<ServerMessage, { type: 'transport' }>;
+/** Every server message other than project updates. */
+export type ServerEvent = Exclude<ServerMessage, { type: 'project' }>;
 
 let snapshot: ProjectSnapshot = { status: 'connecting' };
 const listeners = new Set<() => void>();
-const commandListeners = new Set<(command: TransportCommand) => void>();
+const eventListeners = new Set<(event: ServerEvent) => void>();
 let lastStatus: ClientMessage | undefined;
 let socket: WebSocket | undefined;
 let retries = 0;
@@ -38,19 +39,24 @@ export function subscribe(listener: () => void) {
   };
 }
 
-/** Subscribes to play/stop commands from the server. Opens the connection if needed. */
-export function onCommand(listener: (command: TransportCommand) => void) {
-  commandListeners.add(listener);
+/** Subscribes to server events (play, stop, render). Opens the connection if needed. */
+export function onServerEvent(listener: (event: ServerEvent) => void) {
+  eventListeners.add(listener);
   if (!socket) connect();
   return () => {
-    commandListeners.delete(listener);
+    eventListeners.delete(listener);
   };
+}
+
+/** Sends a message to the server, if connected. */
+export function send(message: ClientMessage) {
+  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
 }
 
 /** Tells the server what this tab's audio is doing. Re-sent after reconnecting. */
 export function reportStatus(status: { audio: AudioStatus; transport: TransportState }) {
   lastStatus = { type: 'status', ...status };
-  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(lastStatus));
+  send(lastStatus);
 }
 
 function update(changes: Partial<ProjectSnapshot>) {
@@ -71,13 +77,10 @@ function connect() {
 
   ws.addEventListener('message', (event) => {
     const message = JSON.parse(event.data) as ServerMessage;
-    switch (message.type) {
-      case 'project':
-        update({ project: message.project, previous: snapshot.project });
-        break;
-      case 'transport':
-        for (const listener of commandListeners) listener(message);
-        break;
+    if (message.type === 'project') {
+      update({ project: message.project, previous: snapshot.project });
+    } else {
+      for (const listener of eventListeners) listener(message);
     }
   });
 

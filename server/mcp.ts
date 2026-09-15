@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import { registerClipTools } from './tools/clips.ts';
 import { registerProjectTools } from './tools/project.ts';
+import { registerRenderTools } from './tools/render.ts';
 import { registerTransportTools } from './tools/transport.ts';
 
 // Tool design follows docs/agentic-usability.md: self-evident descriptions,
@@ -13,5 +14,6 @@ export function createMcpServer() {
   registerProjectTools(server);
   registerClipTools(server);
   registerTransportTools(server);
+  registerRenderTools(server);
   return server;
 }

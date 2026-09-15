@@ -9,6 +9,7 @@ import { createServer as createViteServer } from 'vite';
 import { PORT, UI_URL } from './config.ts';
 import { attachLiveUpdates } from './live.ts';
 import { createMcpServer } from './mcp.ts';
+import { receiveRender } from './renders.ts';
 
 const startedAt = Date.now();
 
@@ -37,9 +38,27 @@ app.all(
   (req, res) => mcpHandler(req, res, req.body),
 );
 
-// The web UI is served by Vite running inside this process, so the UI, the API
-// (and later MCP and the WebSocket) all share one port. Vite's hot-reload
-// socket shares the same HTTP server.
+// Browser tabs upload finished renders here. Large binary bodies are a better
+// fit for HTTP than for the WebSocket.
+app.post(
+  '/api/renders/:id',
+  localhostHostValidation(),
+  localhostOriginValidation(),
+  express.raw({ type: 'audio/wav', limit: '1gb' }),
+  (req, res) => {
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      res.status(400).json({ error: 'Expected a WAV body with Content-Type: audio/wav' });
+    } else if (!receiveRender(String(req.params.id), req.body)) {
+      res.status(404).json({ error: 'Unknown or expired render id' });
+    } else {
+      res.status(204).end();
+    }
+  },
+);
+
+// The web UI is served by Vite running inside this process, so the UI, the API,
+// MCP and the WebSocket all share one port. Vite's hot-reload socket shares the
+// same HTTP server.
 const vite = await createViteServer({
   root: path.resolve(import.meta.dirname, '../web'),
   configFile: false,

@@ -1,12 +1,12 @@
-// The audio engine. A plain module, not React (see "The audio engine is
+// The live audio engine. A plain module, not React (see "The audio engine is
 // separate from the UI" in docs/architecture.md): it follows the project via
 // projectClient, takes transport commands from the server, and reports its
 // status back so MCP tools can tell the agent what's happening.
 
 import type { AudioStatus, TransportState } from '../../shared/protocol.ts';
 import * as projectClient from '../projectClient.ts';
-import { playBasicSynthNote } from './basicSynth.ts';
-import { createPlaybackCursor, type NoteEvent } from './scheduler.ts';
+import { createMasterBus, playNote } from './graph.ts';
+import { createPlaybackCursor } from './scheduler.ts';
 
 export type EngineSnapshot = { audio: AudioStatus; transport: TransportState };
 
@@ -14,7 +14,6 @@ export type EngineSnapshot = { audio: AudioStatus; transport: TransportState };
 const TICK_MS = 25;
 /** A small delay before the first note, so it isn't scheduled in the past. */
 const START_DELAY_SECONDS = 0.05;
-const MASTER_GAIN = 0.8;
 
 let snapshot: EngineSnapshot = { audio: 'locked', transport: 'stopped' };
 const listeners = new Set<() => void>();
@@ -39,9 +38,9 @@ export function subscribe(listener: () => void) {
 export async function enableAudio() {
   if (!context) {
     context = new AudioContext({ latencyHint: 'interactive' });
-    master = new GainNode(context, { gain: MASTER_GAIN });
     analyser = new AnalyserNode(context, { fftSize: 1024 });
-    master.connect(analyser).connect(context.destination);
+    analyser.connect(context.destination);
+    master = createMasterBus(context, analyser);
     context.addEventListener('statechange', () => {
       if (context?.state !== 'running') stop();
       update({ audio: context?.state === 'running' ? 'ready' : 'locked' });
@@ -87,14 +86,6 @@ export function outputPeak() {
   return peak;
 }
 
-function playNote(audioContext: BaseAudioContext, destination: AudioNode, note: NoteEvent) {
-  switch (note.instrument) {
-    case 'basic-synth':
-      playBasicSynthNote(audioContext, destination, note);
-      break;
-  }
-}
-
 function stopPlayback() {
   if (!playback || !context) return;
   clearInterval(playback.timer);
@@ -114,13 +105,15 @@ function update(changes: Partial<EngineSnapshot>) {
   projectClient.reportStatus(snapshot);
 }
 
-projectClient.onCommand((command) => {
-  if (command.action === 'play') play();
+const unsubscribe = projectClient.onServerEvent((event) => {
+  if (event.type !== 'transport') return;
+  if (event.action === 'play') play();
   else stop();
 });
 
 // When Vite hot-reloads this module, silence the old engine.
 import.meta.hot?.dispose(() => {
+  unsubscribe();
   stopPlayback();
   void context?.close();
 });

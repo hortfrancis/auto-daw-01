@@ -1,5 +1,6 @@
 node_modules/
 dist/
+renders/
 test-results/
 playwright-report/
 .env

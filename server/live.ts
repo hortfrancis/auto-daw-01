@@ -1,6 +1,6 @@
 // The link to browser tabs over a WebSocket at /ws. Tabs get a full project
-// snapshot when they connect and after every change, receive transport
-// commands, and report back their audio status.
+// snapshot when they connect and after every change, receive commands (play,
+// stop, render), and report back their audio status.
 
 import type { Server } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -15,6 +15,7 @@ const UNREPORTED: TabStatus = { audio: 'locked', transport: 'stopped' };
 const wss = new WebSocketServer({ noServer: true });
 const statuses = new Map<WebSocket, TabStatus>();
 const statusListeners = new Set<() => void>();
+const messageListeners = new Set<(message: ClientMessage) => void>();
 
 /** What each open tab last reported. A tab that hasn't reported yet counts as locked. */
 export function tabStatuses(): TabStatus[] {
@@ -23,6 +24,23 @@ export function tabStatuses(): TabStatus[] {
 
 export function sendTransport(action: 'play' | 'stop') {
   broadcast({ type: 'transport', action });
+}
+
+/**
+ * Sends a message to one tab, preferring a tab with audio enabled (most likely
+ * the one the user is using). Returns false if no tab is open.
+ */
+export function sendToOneTab(message: ServerMessage) {
+  const open = [...wss.clients].filter((client) => client.readyState === WebSocket.OPEN);
+  const tab = open.find((client) => statuses.get(client)?.audio === 'ready') ?? open[0];
+  if (!tab) return false;
+  tab.send(JSON.stringify(message));
+  return true;
+}
+
+export function onClientMessage(listener: (message: ClientMessage) => void) {
+  messageListeners.add(listener);
+  return () => messageListeners.delete(listener);
 }
 
 /** Resolves true as soon as `condition` holds for the tabs, or false after `timeoutMs`. */
@@ -57,10 +75,12 @@ export function attachLiveUpdates(httpServer: Server) {
     wss.handleUpgrade(req, socket, head, (ws) => {
       ws.on('message', (data) => {
         const message = parseClientMessage(data.toString());
-        if (message?.type === 'status') {
+        if (!message) return;
+        if (message.type === 'status') {
           statuses.set(ws, { audio: message.audio, transport: message.transport });
           notifyStatusListeners();
         }
+        for (const listener of messageListeners) listener(message);
       });
       ws.on('close', () => {
         statuses.delete(ws);
@@ -96,11 +116,20 @@ function notifyStatusListeners() {
 function parseClientMessage(data: string): ClientMessage | undefined {
   try {
     const message = JSON.parse(data);
-    const valid =
+    if (
       message?.type === 'status' &&
       ['locked', 'ready'].includes(message.audio) &&
-      ['stopped', 'playing'].includes(message.transport);
-    return valid ? message : undefined;
+      ['stopped', 'playing'].includes(message.transport)
+    ) {
+      return message;
+    }
+    if (message?.type === 'render-started' && typeof message.id === 'string') {
+      return message;
+    }
+    if (message?.type === 'render-failed' && typeof message.id === 'string' && typeof message.message === 'string') {
+      return message;
+    }
+    return undefined;
   } catch {
     return undefined;
   }
