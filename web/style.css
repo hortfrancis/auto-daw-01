@@ -157,13 +157,60 @@ h2 {
 
 .track {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 1rem;
-  align-items: center;
+  gap: 0.5rem;
   padding: 0.625rem 0.875rem;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 6px;
+}
+
+.track-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Bar numbers, lined up with the lanes inside each track row. */
+.ruler {
+  display: grid;
+  list-style: none;
+  margin: 0 0 0.25rem;
+  padding: 0 calc(0.875rem + 1px);
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lane {
+  display: block;
+  width: 100%;
+  height: 4rem;
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+.lane .clip {
+  fill: #23332c;
+}
+
+.lane .note {
+  fill: var(--ok);
+}
+
+.lane .bar-line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.lane .clip.flash {
+  animation: clip-flash 1.2s ease-out;
+}
+
+@keyframes clip-flash {
+  from {
+    fill: #5c4b1c;
+  }
 }
 
 .track-name {

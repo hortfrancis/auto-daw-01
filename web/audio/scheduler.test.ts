@@ -15,6 +15,7 @@ function project(options: { tempo?: number; startBar?: number; lengthBars?: numb
         clips: [
           {
             id: 'clip-1',
+            name: 'Arpeggio',
             startBar: options.startBar ?? 1,
             lengthBars: options.lengthBars ?? 1,
             notes: options.notes ?? [

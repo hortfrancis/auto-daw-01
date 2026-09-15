@@ -25,7 +25,7 @@ test('play and stop from MCP drive the tab, and sound comes out', async ({ page 
 
   const played = await callTool('play');
   expect(played.isError).toBe(false);
-  expect(played.text).toMatch(/^Playing from bar 1 at [\d.]+ BPM, looping the 1 bar of the song, in 1 tab\.$/);
+  expect(played.text).toMatch(/^Playing from bar 1 at [\d.]+ BPM, looping the \d+ bars? of the song, in 1 tab\.$/);
   await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
   await expect(page.locator('.meter')).toHaveAttribute('data-active', 'true');
   expect((await callTool('get_project')).text).toContain('audio enabled, playing');

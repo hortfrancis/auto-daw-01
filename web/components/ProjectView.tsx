@@ -1,5 +1,9 @@
 import type { Project } from '../../shared/project.ts';
+import { beatsPerBar, songLengthBars } from '../../shared/timing.ts';
 import { TrackList } from './TrackList.tsx';
+
+/** The piano rolls always show at least this many bars, so a short song isn't stretched. */
+const MIN_BARS_SHOWN = 4;
 
 type Props = {
   project: Project;
@@ -28,7 +32,12 @@ export function ProjectView({ project, previous }: Props) {
           </div>
         </dl>
       </section>
-      <TrackList tracks={project.tracks} previousTracks={previous?.tracks} />
+      <TrackList
+        tracks={project.tracks}
+        previousTracks={previous?.tracks}
+        totalBars={Math.max(MIN_BARS_SHOWN, songLengthBars(project))}
+        beatsInBar={beatsPerBar(project)}
+      />
     </main>
   );
 }

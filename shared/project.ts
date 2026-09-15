@@ -12,6 +12,7 @@ export type Note = {
 
 export type Clip = {
   id: string;
+  name: string; // unique on its track
   startBar: number;
   lengthBars: number;
   notes: Note[];
