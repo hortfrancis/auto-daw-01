@@ -40,3 +40,4 @@ See [architecture.md](architecture.md) for the system design these spikes build 
 Good ideas that came up along the way, parked so the spikes stay focused.
 
 - **Render viewer in the web UI:** show the latest render's picture and summary, with a player for its WAV, next to the tracks, so the user sees exactly what the agent saw. Suggested in spike 7.
+- **Playhead:** a line moving across the piano rolls during playback, showing where in the song it's playing (and wrapping round when it loops). The engine knows exactly when each beat plays; the UI just needs to follow it. Suggested after spike 7.
