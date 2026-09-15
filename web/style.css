@@ -1,0 +1,37 @@
+:root {
+  color-scheme: dark;
+  --bg: #16171a;
+  --fg: #e6e6e6;
+  --muted: #8a8f98;
+  --ok: #5fd38d;
+  --error: #ff6b6b;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.status {
+  margin: 0;
+  color: var(--muted);
+}
+
+.status[data-state='ok'] {
+  color: var(--ok);
+}
+
+.status[data-state='error'] {
+  color: var(--error);
+}

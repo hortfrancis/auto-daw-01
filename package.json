@@ -1,0 +1,23 @@
+{
+  "name": "auto-daw",
+  "version": "0.0.0",
+  "private": true,
+  "description": "An MCP-first digital audio workstation",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "node --watch server/index.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.13.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}
