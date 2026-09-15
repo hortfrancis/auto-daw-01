@@ -19,5 +19,6 @@ Then open http://localhost:4747.
 
 The MCP endpoint is `http://localhost:4747/mcp` (Streamable HTTP). Claude Code picks it up from `.mcp.json` in this repo: start Claude Code here and approve `auto-daw` when asked (or check it with `/mcp`).
 
+- [Agentic usability](docs/agentic-usability.md): how we design for the LLM as the primary user
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)

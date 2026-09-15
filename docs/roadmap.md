@@ -7,7 +7,7 @@ See [architecture.md](architecture.md) for the system design these spikes build 
 ## How each spike runs
 
 - Small enough to finish and review in one sitting.
-- Ends with a quick demo: the user clicks around in the browser, the LLM tests over MCP.
+- Ends with a quick demo: the user clicks around in the browser, the LLM tests over MCP. The LLM's part is a usability test (see [agentic-usability.md](agentic-usability.md#how-we-test-it)), and anything it stumbles on gets fixed or noted.
 - Gets committed, with anything surprising written up in `docs/` (e.g. "Tone.js's offline mode drifts").
 - Throwaway code is fine, but anything that survives should be simple enough to build on.
 

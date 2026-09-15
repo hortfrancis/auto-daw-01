@@ -6,6 +6,10 @@
 - `web/`: browser UI, served by Vite running inside the server process on the same port.
 - `docs/`: architecture and roadmap. We build in small spikes (see `docs/roadmap.md`).
 
+## Agentic usability comes first
+
+The LLM agent is this software's primary user. Design every MCP tool, result and error by [docs/agentic-usability.md](docs/agentic-usability.md), and run its checklist before adding or changing a tool. In short: self-evident tools, musical units, short results, errors that teach, safe to retry and undo, one call per whole job.
+
 ## Commands
 
 - `npm run dev`: start everything at http://localhost:4747 (set `PORT` to change)
