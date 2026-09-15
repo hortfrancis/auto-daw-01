@@ -73,7 +73,7 @@ export async function renderInTab(project: Project, finishTimeoutMs: number) {
   await mkdir(RENDERS_DIR, { recursive: true });
   const file = path.join(RENDERS_DIR, `${new Date().toISOString().replaceAll(':', '-')}-${id.slice(0, 8)}.wav`);
   await writeFile(file, wav);
-  return { file, bytes: wav.length, sampleRate: RENDER_SAMPLE_RATE };
+  return { file, wav, sampleRate: RENDER_SAMPLE_RATE };
 }
 
 /** Called when a tab uploads a finished render. Returns false for unknown or expired render ids. */

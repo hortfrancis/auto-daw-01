@@ -1,6 +1,13 @@
 import { E2E_PORT } from './port.ts';
 
-export type ToolResult = { isError: boolean; text: string };
+export type ToolResult = {
+  isError: boolean;
+  /** All text blocks, joined with newlines. */
+  text: string;
+  images: { data: string; mimeType: string }[];
+};
+
+type ContentBlock = { type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string };
 
 /** Calls an MCP tool on the test server, the same way an agent would. */
 export async function callTool(name: string, args: Record<string, unknown> = {}): Promise<ToolResult> {
@@ -19,9 +26,11 @@ export async function callTool(name: string, args: Record<string, unknown> = {})
   const dataLine = body.split('\n').find((line) => line.startsWith('data: '));
   const message = JSON.parse(dataLine ? dataLine.slice('data: '.length) : body);
 
-  if (message.error) return { isError: true, text: `JSON-RPC error: ${message.error.message}` };
+  if (message.error) return { isError: true, text: `JSON-RPC error: ${message.error.message}`, images: [] };
+  const content: ContentBlock[] = message.result.content;
   return {
     isError: Boolean(message.result.isError),
-    text: message.result.content.map((block: { text: string }) => block.text).join('\n'),
+    text: content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('\n'),
+    images: content.flatMap((block) => (block.type === 'image' ? [{ data: block.data, mimeType: block.mimeType }] : [])),
   };
 }

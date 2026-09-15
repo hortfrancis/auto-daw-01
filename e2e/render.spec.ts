@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { callTool } from './mcp.ts';
 
-const RENDER_RESULT = /^Rendered the whole song, (\d+) bars? at ([\d.]+) BPM \(([\d.]+) s, 48 kHz stereo WAV\), to (.+\.wav) \(([\d.]+) MB\)\.$/;
+const RENDER_RESULT = /^Rendered the whole song, (\d+) bars? at ([\d.]+) BPM \(([\d.]+) s, 48 kHz stereo WAV\), to (.+\.wav) \(([\d.]+) MB\)\.$/m;
 const WAV_HEADER_BYTES = 44;
 
 test('render tells the agent it needs the browser tab', async () => {
@@ -42,6 +42,46 @@ test('render saves a WAV of the whole song, matching every time, without enablin
 
   // And there's actually sound in it.
   expect(largestSampleDifference(a, Buffer.alloc(a.length))).toBeGreaterThan(1000);
+});
+
+test('render describes levels, loudness by bar and frequency balance, with a picture', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#connection')).toHaveText('Live');
+
+  const result = await callTool('render');
+
+  expect(result.isError, result.text).toBe(false);
+  expect(result.text).toMatch(/^Peak: -\d+\.\d dBFS \(no clipping\)$/m);
+  expect(result.text).toMatch(/^Loudness: -\d+\.\d LUFS integrated$/m);
+  expect(result.text).toMatch(/^Loudness by bar \(LUFS\): 1: (-\d+\.\d|silent)( \| \d+: (-\d+\.\d|silent))*$/m);
+  expect(result.text).toMatch(/^Frequency balance: low \(below 250 Hz\) \d+%, mid \(250 Hz–4 kHz\) \d+%, high \(above 4 kHz\) \d+%$/m);
+  expect(result.text).toContain('The picture shows the waveform above a spectrogram.');
+
+  expect(result.images).toHaveLength(1);
+  expect(result.images[0].mimeType).toBe('image/png');
+  const png = Buffer.from(result.images[0].data, 'base64');
+  expect(png.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+  const pictureFile = result.text.match(/Also saved as (\S+\.png)\./)?.[1];
+  expect(pictureFile, result.text).toBeDefined();
+  expect((await readFile(pictureFile!)).equals(png)).toBe(true);
+});
+
+test('render points out clipping and which bars it is in', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#connection')).toHaveText('Live');
+  await callTool('add_tracks', { tracks: [{ name: 'Wall of sound' }] });
+  // 16 copies of the same note: identical waveforms add up, so this clips
+  // throughout. (Even a 12-note chord of different pitches has headroom.)
+  await callTool('write_clip', {
+    track: 'Wall of sound',
+    clip: 'Too loud',
+    startBar: 2,
+    notes: Array.from({ length: 16 }, () => ({ pitch: 'C3', bar: 1, beat: 1, lengthBeats: 4, velocity: 1 })),
+  });
+
+  const result = await callTool('render');
+
+  expect(result.text).toMatch(/^Peak: 0\.0 dBFS, clipping: \d+ samples at full scale, in bars? 2\b/m);
 });
 
 /** The biggest difference between matching 16-bit samples in two WAV files of the same length. */

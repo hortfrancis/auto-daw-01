@@ -21,7 +21,7 @@ See [architecture.md](architecture.md) for the system design these spikes build 
 | 4 | **First sound** | Can we schedule notes accurately with Web Audio, and do we use Tone.js or plain Web Audio? | The user clicks "Enable audio", then `play` (from the LLM or a button) plays a hard-coded synth melody in time | Done |
 | 5 | **Notes via MCP** | Is a bars-and-beats note format comfortable for an LLM to write? | The LLM calls `write_notes`, a simple piano roll shows the notes, and the user hears them | Done ([findings](spikes/05-notes-via-mcp.md)) |
 | 6 | **Offline render** | Does rendering offline give exactly the same audio as live playback? This is the biggest unknown. | The LLM calls `render`, the tab renders a WAV and sends it back, and two renders of the same project match (within one 16-bit step) | Done ([findings](spikes/06-offline-render.md)) |
-| 7 | **LLM "hears"** | Can the LLM tell useful things about the music from numbers and a spectrogram? | `render` returns loudness and clipping figures plus a spectrogram image, and the LLM can describe what it sees | Not started |
+| 7 | **LLM "hears"** | Can the LLM tell useful things about the music from numbers and a spectrogram? | `render` returns loudness and clipping figures plus a spectrogram image, and the LLM can describe what it sees | Done ([findings](spikes/07-llm-hears.md)) |
 | 8 | **Saving + undo** | Does the work survive a closed tab or a server restart? | After a server restart the project is still there, and `undo`/`redo` work | Not started |
 | 9 | **Hand edits** | Do the user's edits and the LLM's go through the same path? | The user drags a note in the UI and the LLM's next `get_project` shows the change | Not started |
 | 10 | **Mixer + effects** | How should the audio graph look once tracks have volume and effects? | Each track has volume, pan and a couple of effects, all adjustable from the UI or over MCP | Not started |
@@ -34,3 +34,9 @@ See [architecture.md](architecture.md) for the system design these spikes build 
 - **Spikes 1–3** set up the connections before any audio, so later audio bugs aren't tangled up with connection bugs.
 - **Spike 6 comes early on purpose.** The "one engine" rule depends on offline renders matching live playback. If they don't, we want to know before building saving, undo and effects on top.
 - **Spike 8 (saving + undo)** could move earlier if losing work while testing gets annoying. It doesn't block anything else.
+
+## Extra features, after the spikes
+
+Good ideas that came up along the way, parked so the spikes stay focused.
+
+- **Render viewer in the web UI:** show the latest render's picture and summary, with a player for its WAV, next to the tracks, so the user sees exactly what the agent saw. Suggested in spike 7.

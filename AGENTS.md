@@ -2,7 +2,7 @@
 
 ## Project
 
-- `server/`: Node process (Express). Serves `/api/*`, the MCP endpoint at `/mcp` (tools live in `server/tools/`, their text output in `server/describe.ts`), and the UI. Node runs the `.ts` files directly, so use erasable TypeScript syntax only (no `enum` or `namespace`) and `.ts` import extensions.
+- `server/`: Node process (Express). Serves `/api/*`, the MCP endpoint at `/mcp` (tools live in `server/tools/`, their text output in `server/describe.ts`, render analysis in `server/analysis/`), and the UI. Node runs the `.ts` files directly, so use erasable TypeScript syntax only (no `enum` or `namespace`) and `.ts` import extensions.
 - `web/`: browser UI, served by Vite running inside the server process on the same port. Gets project state pushed over a WebSocket at `/ws`. The UI is React; the audio engine is not. The engine follows project state directly, and components never create audio nodes or schedule sound (see "The audio engine is separate from the UI" in `docs/architecture.md`).
 - `shared/`: types used by both server and web (project model, WebSocket messages).
 - `docs/`: architecture and roadmap. We build in small spikes (see `docs/roadmap.md`).
