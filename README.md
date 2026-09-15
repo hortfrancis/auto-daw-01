@@ -15,6 +15,8 @@ npm run dev
 
 Then open http://localhost:4747.
 
+Tests: `npx playwright install chromium` once, then `npm run test:e2e`.
+
 ## Connect an MCP client
 
 The MCP endpoint is `http://localhost:4747/mcp` (Streamable HTTP). Claude Code picks it up from `.mcp.json` in this repo: start Claude Code here and approve `auto-daw` when asked (or check it with `/mcp`).

@@ -4,6 +4,7 @@ import express from 'express';
 import { localhostHostValidation, localhostOriginValidation } from '@modelcontextprotocol/express';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createMcpHandler } from '@modelcontextprotocol/server';
+import react from '@vitejs/plugin-react';
 import { createServer as createViteServer } from 'vite';
 import { PORT, UI_URL } from './config.ts';
 import { attachLiveUpdates } from './live.ts';
@@ -42,6 +43,7 @@ app.all(
 const vite = await createViteServer({
   root: path.resolve(import.meta.dirname, '../web'),
   configFile: false,
+  plugins: [react()],
   appType: 'spa',
   server: { middlewareMode: true, hmr: { server: httpServer } },
 });

@@ -13,5 +13,5 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "include": ["server", "shared"]
+  "include": ["server", "shared", "e2e", "playwright.config.ts"]
 }

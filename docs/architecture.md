@@ -93,6 +93,18 @@ So there's **one audio engine: Web Audio, in the browser.** It's used three ways
 | Render for inspection | `OfflineAudioContext` → WAV sent to server → analysis | LLM |
 | Final export | `OfflineAudioContext` → WAV saved to disk | Both |
 
+### The audio engine is separate from the UI
+
+In the browser tab, the **audio engine and the React UI are separate modules that both follow the same project state**. Neither one drives the other.
+
+- The engine listens for project updates directly. It never lives in React state, components or effects.
+- React components never create audio nodes or schedule sound. They only ask the engine to do things, like "play" or "stop".
+
+The reasons:
+- **Timing.** A React re-render must never be able to delay or restart scheduled audio.
+- **Consistency.** Offline renders for the LLM and final exports use the engine with no UI at all, so the engine can't depend on React.
+- **Testability.** Each side can be tested on its own.
+
 Live playback and offline rendering build the same audio graph from the same project state. To keep them identical, the engine has to be **deterministic**: every event is scheduled from the project's own timeline (never the wall clock), and anything random uses a stored seed.
 
 ## Two ways for the LLM to inspect the music

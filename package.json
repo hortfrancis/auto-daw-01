@@ -9,20 +9,27 @@
   },
   "scripts": {
     "dev": "node --watch server/index.ts",
-    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@modelcontextprotocol/express": "^2.0.0",
     "@modelcontextprotocol/node": "^2.0.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "express": "^5.2.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "ws": "^8.21.3",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/express": "^5.0.6",
     "@types/node": "^24.13.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^6.1.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.0"
   }
