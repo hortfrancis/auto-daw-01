@@ -2,7 +2,7 @@
 
 ## Project
 
-- `server/`: Node process (Express). Node runs the `.ts` files directly, so use erasable TypeScript syntax only (no `enum` or `namespace`) and `.ts` import extensions.
+- `server/`: Node process (Express). Serves `/api/*`, the MCP endpoint at `/mcp` (tools live in `server/mcp.ts`), and the UI. Node runs the `.ts` files directly, so use erasable TypeScript syntax only (no `enum` or `namespace`) and `.ts` import extensions.
 - `web/`: browser UI, served by Vite running inside the server process on the same port.
 - `docs/`: architecture and roadmap. We build in small spikes (see `docs/roadmap.md`).
 

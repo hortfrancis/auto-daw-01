@@ -15,5 +15,9 @@ npm run dev
 
 Then open http://localhost:4747.
 
+## Connect an MCP client
+
+The MCP endpoint is `http://localhost:4747/mcp` (Streamable HTTP). Claude Code picks it up from `.mcp.json` in this repo: start Claude Code here and approve `auto-daw` when asked (or check it with `/mcp`).
+
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
