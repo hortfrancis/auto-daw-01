@@ -5,13 +5,15 @@ import { localhostHostValidation, localhostOriginValidation } from '@modelcontex
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createServer as createViteServer } from 'vite';
+import { PORT, UI_URL } from './config.ts';
+import { attachLiveUpdates } from './live.ts';
 import { createMcpServer } from './mcp.ts';
 
-const PORT = Number(process.env.PORT ?? 4747);
 const startedAt = Date.now();
 
 const app = express();
 const httpServer = createServer(app);
+attachLiveUpdates(httpServer);
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -46,5 +48,5 @@ const vite = await createViteServer({
 app.use(vite.middlewares);
 
 httpServer.listen(PORT, () => {
-  console.log(`Auto DAW running at http://localhost:${PORT}`);
+  console.log(`Auto DAW running at ${UI_URL}`);
 });

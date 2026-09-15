@@ -1,37 +1,141 @@
 :root {
   color-scheme: dark;
   --bg: #16171a;
+  --panel: #1f2125;
+  --line: #2c2f35;
   --fg: #e6e6e6;
   --muted: #8a8f98;
   --ok: #5fd38d;
   --error: #ff6b6b;
+  --flash: #f5c84c;
 }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
   background: var(--bg);
   color: var(--fg);
   font-family: system-ui, sans-serif;
 }
 
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.connection {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.connection::before {
+  content: '●';
+  margin-right: 0.4em;
+}
+
+.connection[data-state='ok'] {
+  color: var(--ok);
+}
+
+.connection[data-state='error'] {
+  color: var(--error);
+}
+
+.project {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+}
+
+.project-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 h1 {
-  margin: 0 0 0.5rem;
+  margin: 0;
+  font-size: 1.75rem;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-.status {
-  margin: 0;
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--muted);
 }
 
-.status[data-state='ok'] {
-  color: var(--ok);
+.meta {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
 }
 
-.status[data-state='error'] {
-  color: var(--error);
+.meta dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.meta dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.track-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.625rem 0.875rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.track-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-instrument,
+.track-contents,
+.empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.flash {
+  animation: flash 1.2s ease-out;
+}
+
+@keyframes flash {
+  from {
+    box-shadow: 0 0 0 2px var(--flash);
+    color: var(--flash);
+  }
 }

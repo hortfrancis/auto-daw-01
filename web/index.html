@@ -7,10 +7,11 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <main>
-      <h1>Auto DAW</h1>
-      <p id="server-status" class="status">Checking server…</p>
-    </main>
+    <header class="topbar">
+      <span class="brand">Auto DAW</span>
+      <span id="connection" class="connection">Connecting…</span>
+    </header>
+    <main id="project" class="project" hidden></main>
     <script type="module" src="/main.ts"></script>
   </body>
 </html>

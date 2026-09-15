@@ -17,7 +17,7 @@ See [architecture.md](architecture.md) for the system design these spikes build 
 |---|---|---|---|---|
 | 1 | **Skeleton** | Can one `npm run dev` start both the server and the web UI? | The user opens `localhost:PORT` and sees a page served by the Node server | Done |
 | 2 | **MCP hello** | Can Claude Code connect to our server over HTTP? | After `claude mcp add`, the LLM calls a `get_project` tool and gets back a hard-coded project | Done |
-| 3 | **Live bridge** | Does server state push to the browser in real time? | The LLM calls `set_tempo` or `add_track` and the open tab updates without a refresh | Not started |
+| 3 | **Live bridge** | Does server state push to the browser in real time? | The LLM calls `set_tempo` or `add_track` and the open tab updates without a refresh | Done |
 | 4 | **First sound** | Can we schedule notes accurately with Web Audio, and do we use Tone.js or plain Web Audio? | The user clicks "Enable audio", then `play` (from the LLM or a button) plays a hard-coded synth melody in time | Not started |
 | 5 | **Notes via MCP** | Is a bars-and-beats note format comfortable for an LLM to write? | The LLM calls `write_notes`, a simple piano roll shows the notes, and the user hears them | Not started |
 | 6 | **Offline render** | Does rendering offline give exactly the same audio as live playback? This is the biggest unknown. | The LLM calls `render`, the tab renders a WAV and sends it back, and two renders of the same project come out identical | Not started |
