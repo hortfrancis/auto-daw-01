@@ -6,10 +6,11 @@ import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import react from '@vitejs/plugin-react';
 import { createServer as createViteServer } from 'vite';
-import { PORT, UI_URL } from './config.ts';
+import { PORT, PROJECT_FILE, UI_URL } from './config.ts';
 import { attachLiveUpdates } from './live.ts';
 import { createMcpServer } from './mcp.ts';
 import { receiveRender } from './renders.ts';
+import { startedFromSave } from './store.ts';
 
 const startedAt = Date.now();
 
@@ -70,4 +71,9 @@ app.use(vite.middlewares);
 
 httpServer.listen(PORT, () => {
   console.log(`Auto DAW running at ${UI_URL}`);
+  console.log(
+    startedFromSave
+      ? `Loaded the saved project from ${PROJECT_FILE}`
+      : `Started a new demo project. It saves automatically to ${PROJECT_FILE}`,
+  );
 });

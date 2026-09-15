@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import { registerClipTools } from './tools/clips.ts';
+import { registerHistoryTools } from './tools/history.ts';
 import { registerProjectTools } from './tools/project.ts';
 import { registerRenderTools } from './tools/render.ts';
 import { registerTransportTools } from './tools/transport.ts';
@@ -13,6 +14,7 @@ export function createMcpServer() {
   const server = new McpServer({ name: 'auto-daw', version: '0.0.0' });
   registerProjectTools(server);
   registerClipTools(server);
+  registerHistoryTools(server);
   registerTransportTools(server);
   registerRenderTools(server);
   return server;

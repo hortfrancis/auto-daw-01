@@ -1,15 +1,23 @@
 // The project state: the single source of truth. MCP tools (and later the UI)
-// change it only through the commands below, which notify subscribers.
-// In memory for now; saving to disk arrives in spike 8.
+// change it only through the commands below. Every change is labelled for
+// undo, saved to disk, and sent to subscribers.
 
 import { barRange } from '../shared/format.ts';
 import type { Clip, Instrument, Project, Track } from '../shared/project.ts';
 import { beatsPerBar } from '../shared/timing.ts';
+import { PROJECT_FILE } from './config.ts';
 import { CommandError } from './errors.ts';
+import { createHistory } from './history.ts';
 import { checkNotes, type NoteInput } from './notes.ts';
+import { loadProject, saveProject } from './persistence.ts';
 
 export const INSTRUMENTS = ['basic-synth'] as const satisfies readonly Instrument[];
 export const TEMPO_RANGE = { min: 20, max: 400 } as const;
+/**
+ * How many changes undo can go back. History is kept in memory (snapshots of
+ * a big song would be heavy to save), so it starts empty when the server starts.
+ */
+const HISTORY_LIMIT = 100;
 
 export type ClipSpec = {
   track: string;
@@ -19,9 +27,13 @@ export type ClipSpec = {
   notes: NoteInput[];
 };
 
-let project: Project = createDemoProject();
+const saved = loadProject(PROJECT_FILE);
+let project: Project = saved ?? createDemoProject();
+/** True if the project was loaded from disk when the server started, false for a new demo project. */
+export const startedFromSave = saved !== undefined;
 let version = 1;
 const listeners = new Set<() => void>();
+const history = createHistory<Project>(HISTORY_LIMIT);
 
 export function getProject(): Readonly<Project> {
   return project;
@@ -36,9 +48,28 @@ export function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-function changed() {
-  version++;
-  for (const listener of listeners) listener();
+export function historySummary() {
+  return history.summary();
+}
+
+/** Undoes up to `steps` changes, newest first. Returns the labels of what was undone. */
+export function undo(steps: number) {
+  const { state, labels } = history.undo(project, steps);
+  if (labels.length > 0) {
+    project = state;
+    publish();
+  }
+  return labels;
+}
+
+/** Redoes up to `steps` undone changes. Returns the labels of what was redone. */
+export function redo(steps: number) {
+  const { state, labels } = history.redo(project, steps);
+  if (labels.length > 0) {
+    project = state;
+    publish();
+  }
+  return labels;
 }
 
 export function setTempo(bpm: number) {
@@ -47,9 +78,10 @@ export function setTempo(bpm: number) {
       `Tempo ${bpm} BPM is out of range. Use ${TEMPO_RANGE.min}–${TEMPO_RANGE.max} BPM.`,
     );
   }
+  const before = structuredClone(project);
   const previous = project.tempo;
   project.tempo = bpm;
-  changed();
+  changed(`set tempo to ${bpm} BPM`, before);
   return { previous };
 }
 
@@ -73,6 +105,7 @@ export function addTracks(specs: { name: string; instrument: Instrument }[]): Tr
     inRequest.add(key);
   }
 
+  const before = structuredClone(project);
   let nextId = Math.max(0, ...project.tracks.map((t) => Number(t.id.replace('track-', '')) || 0)) + 1;
   const added = specs.map(({ name, instrument }) => ({
     id: `track-${nextId++}`,
@@ -81,7 +114,7 @@ export function addTracks(specs: { name: string; instrument: Instrument }[]): Tr
     clips: [],
   }));
   project.tracks.push(...added);
-  changed();
+  changed(`add ${added.length === 1 ? 'track' : 'tracks'} ${added.map((t) => `"${t.name}"`).join(', ')}`, before);
   return added;
 }
 
@@ -120,13 +153,14 @@ export function writeClip(spec: ClipSpec) {
     throw new CommandError(`Clip not written. Fix these and try again:\n${problems.map((p) => `- ${p}`).join('\n')}`);
   }
 
+  const before = structuredClone(project);
   const previousNoteCount = existing?.notes.length;
   const clip: Clip = existing ?? { id: nextClipId(), name: spec.clip.trim(), startBar, lengthBars, notes };
   Object.assign(clip, { startBar, lengthBars, notes });
   if (!existing) track.clips.push(clip);
   track.clips.sort((a, b) => a.startBar - b.startBar);
 
-  changed();
+  changed(`${existing ? 'replace' : 'create'} clip "${clip.name}" on ${track.name}`, before);
   return { track, clip, previousNoteCount };
 }
 
@@ -156,6 +190,18 @@ export function findClip(trackRef: string, clipRef: string) {
 
 export function trackNames() {
   return project.tracks.map((t) => t.name).join(', ') || '(none)';
+}
+
+/** Records a change for undo, then saves and publishes it. `before` is the project as it was. */
+function changed(label: string, before: Project) {
+  history.record(label, before);
+  publish();
+}
+
+function publish() {
+  version++;
+  saveProject(PROJECT_FILE, project);
+  for (const listener of listeners) listener();
 }
 
 function matchClip(track: Track, ref: string) {

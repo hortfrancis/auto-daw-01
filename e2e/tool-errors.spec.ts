@@ -55,6 +55,7 @@ const cases: { tool: string; args: Record<string, unknown>; says: string | strin
     },
     says: ['beat 5 is past the end of the bar', 'Use lengthBars: 2 or more', 'would overlap clip "Arpeggio" (bar 1) on Lead'],
   },
+  { tool: 'undo', args: { steps: 0 }, says: 'steps: Too small' },
   {
     tool: 'get_clip',
     args: { track: 'Lead', clip: 'Chorus' },

@@ -6,12 +6,14 @@ import { midiFromPitch } from '../shared/pitch.ts';
 import type { Clip, Note, Project } from '../shared/project.ts';
 import { UI_URL } from './config.ts';
 import { tabStatuses } from './live.ts';
+import * as store from './store.ts';
 
 export function describeProject(project: Readonly<Project>) {
   const [beats, unit] = project.timeSignature;
   const lines = [
     `Project "${project.name}": ${project.tempo} BPM, ${beats}/${unit}`,
     describeBrowser(),
+    `${describeHistory()} Every change is saved automatically.`,
     '',
     `Tracks (${project.tracks.length}):`,
   ];
@@ -35,6 +37,14 @@ export function describeBrowser() {
   }
   const playing = tabs.some((tab) => tab.transport === 'playing');
   return `${open}, audio enabled, ${playing ? 'playing' : 'stopped'}`;
+}
+
+/** "History: 3 changes can be undone (latest: …); nothing to redo." */
+export function describeHistory() {
+  const { undoCount, redoCount, nextUndo, nextRedo } = store.historySummary();
+  const undo = undoCount === 0 ? 'nothing to undo' : `${plural(undoCount, 'change')} can be undone (latest: ${nextUndo})`;
+  const redo = redoCount === 0 ? 'nothing to redo' : `${plural(redoCount, 'change')} can be redone (next: ${nextRedo})`;
+  return `History: ${undo}; ${redo}.`;
 }
 
 /** "bars 1–4, 16 notes, E1–B2". Pass the previous note count to add "(was 12)". */

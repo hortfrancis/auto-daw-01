@@ -20,8 +20,13 @@ export default defineConfig({
     // closed port on 127.0.0.1 hangs for ~2 minutes instead of being refused,
     // which stalls Playwright's "is the port already in use?" check.
     url: `http://[::1]:${E2E_PORT}/api/health`,
-    // Test renders go to a temp folder, not the repo's renders/.
-    env: { PORT: String(E2E_PORT), RENDERS_DIR: path.join(os.tmpdir(), 'auto-daw-e2e-renders') },
+    // Test renders and projects go to temp folders, not the repo. A new projects
+    // folder each run means every run starts from the demo project.
+    env: {
+      PORT: String(E2E_PORT),
+      RENDERS_DIR: path.join(os.tmpdir(), 'auto-daw-e2e-renders'),
+      PROJECTS_DIR: path.join(os.tmpdir(), `auto-daw-e2e-projects-${Date.now()}`),
+    },
     reuseExistingServer: false,
   },
 });

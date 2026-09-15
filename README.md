@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:4747.
+Then open http://localhost:4747. Your project saves automatically to `projects/default/project.json`.
 
 Tests: `npx playwright install chromium` once, then `npm run test:e2e`.
 

@@ -9,9 +9,9 @@ export type ToolResult = {
 
 type ContentBlock = { type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string };
 
-/** Calls an MCP tool on the test server, the same way an agent would. */
-export async function callTool(name: string, args: Record<string, unknown> = {}): Promise<ToolResult> {
-  const response = await fetch(`http://localhost:${E2E_PORT}/mcp`, {
+/** Calls an MCP tool on the test server (or another port), the same way an agent would. */
+export async function callTool(name: string, args: Record<string, unknown> = {}, port = E2E_PORT): Promise<ToolResult> {
+  const response = await fetch(`http://localhost:${port}/mcp`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
