@@ -3,15 +3,10 @@
 // In memory for now; saving to disk arrives in spike 8.
 
 import type { Instrument, Project, Track } from '../shared/project.ts';
+import { CommandError } from './errors.ts';
 
 export const INSTRUMENTS = ['basic-synth'] as const satisfies readonly Instrument[];
 export const TEMPO_RANGE = { min: 20, max: 400 } as const;
-
-/**
- * A problem with the caller's request. The message goes straight back to the
- * agent, so it must say what was wrong and how to fix it.
- */
-export class CommandError extends Error {}
 
 let project: Project = createDemoProject();
 let version = 1;

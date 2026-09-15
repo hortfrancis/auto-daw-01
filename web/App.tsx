@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { ConnectionIndicator } from './components/ConnectionIndicator.tsx';
 import { ProjectView } from './components/ProjectView.tsx';
+import { Transport } from './components/Transport.tsx';
 import * as projectClient from './projectClient.ts';
 
 export function App() {
@@ -13,7 +14,10 @@ export function App() {
     <>
       <header className="topbar">
         <span className="brand">Auto DAW</span>
-        <ConnectionIndicator status={status} />
+        <div className="topbar-controls">
+          <Transport />
+          <ConnectionIndicator status={status} />
+        </div>
       </header>
       {project && <ProjectView project={project} previous={previous} />}
     </>

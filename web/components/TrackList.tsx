@@ -1,5 +1,5 @@
 import type { Track } from '../../shared/project.ts';
-import { plural } from '../format.ts';
+import { plural } from '../../shared/format.ts';
 
 type Props = {
   tracks: Track[];

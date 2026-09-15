@@ -1,9 +1,10 @@
-// Keeps this tab in sync with the server's project over the /ws WebSocket.
-// A plain module rather than a React hook, so the audio engine can follow the
-// same state without going through React (see docs/architecture.md).
+// Keeps this tab in sync with the server over the /ws WebSocket: receives the
+// project and transport commands, and reports this tab's audio status.
+// A plain module rather than a React hook, so the audio engine can use it
+// without going through React (see docs/architecture.md).
 
 import type { Project } from '../shared/project.ts';
-import type { ServerMessage } from '../shared/protocol.ts';
+import type { AudioStatus, ClientMessage, ServerMessage, TransportState } from '../shared/protocol.ts';
 
 export type ConnectionStatus = 'connecting' | 'live' | 'disconnected';
 
@@ -14,8 +15,12 @@ export type ProjectSnapshot = {
   previous?: Project;
 };
 
+export type TransportCommand = Extract<ServerMessage, { type: 'transport' }>;
+
 let snapshot: ProjectSnapshot = { status: 'connecting' };
 const listeners = new Set<() => void>();
+const commandListeners = new Set<(command: TransportCommand) => void>();
+let lastStatus: ClientMessage | undefined;
 let socket: WebSocket | undefined;
 let retries = 0;
 let stopped = false;
@@ -24,13 +29,28 @@ export function getSnapshot() {
   return snapshot;
 }
 
-/** Subscribes to changes. The first subscriber opens the connection. */
+/** Subscribes to project and connection changes. Opens the connection if needed. */
 export function subscribe(listener: () => void) {
   listeners.add(listener);
   if (!socket) connect();
   return () => {
     listeners.delete(listener);
   };
+}
+
+/** Subscribes to play/stop commands from the server. Opens the connection if needed. */
+export function onCommand(listener: (command: TransportCommand) => void) {
+  commandListeners.add(listener);
+  if (!socket) connect();
+  return () => {
+    commandListeners.delete(listener);
+  };
+}
+
+/** Tells the server what this tab's audio is doing. Re-sent after reconnecting. */
+export function reportStatus(status: { audio: AudioStatus; transport: TransportState }) {
+  lastStatus = { type: 'status', ...status };
+  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(lastStatus));
 }
 
 function update(changes: Partial<ProjectSnapshot>) {
@@ -45,12 +65,20 @@ function connect() {
 
   ws.addEventListener('open', () => {
     retries = 0;
+    if (lastStatus) ws.send(JSON.stringify(lastStatus));
     update({ status: 'live' });
   });
 
   ws.addEventListener('message', (event) => {
     const message = JSON.parse(event.data) as ServerMessage;
-    if (message.type === 'project') update({ project: message.project, previous: snapshot.project });
+    switch (message.type) {
+      case 'project':
+        update({ project: message.project, previous: snapshot.project });
+        break;
+      case 'transport':
+        for (const listener of commandListeners) listener(message);
+        break;
+    }
   });
 
   // Also fires when the server restarts: keep retrying, backing off to 5s.

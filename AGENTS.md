@@ -15,6 +15,7 @@ The LLM agent is this software's primary user. Design every MCP tool, result and
 
 - `npm run dev`: start everything at http://localhost:4747 (set `PORT` to change)
 - `npm run typecheck`: typecheck server, web and tests
+- `npm test`: Vitest unit tests for pure logic (timing, pitch, scheduling). They sit next to the code as `*.test.ts`.
 - `npm run test:e2e`: Playwright end-to-end tests (real server on port 4748, real browser, real MCP calls). First time: `npx playwright install chromium`. Run them after every change, and add a test for each new tool or UI behaviour in `e2e/`.
 
 ## Commits

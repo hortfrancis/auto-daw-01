@@ -4,8 +4,8 @@ export type Instrument = 'basic-synth';
 
 export type Note = {
   pitch: string; // scientific pitch notation, e.g. "C4"
-  bar: number; // 1-based
-  beat: number; // 1-based, fractional for off-beats
+  bar: number; // 1-based, counted from the start of the clip
+  beat: number; // 1-based, fractional for off-beats (2.5 is the "and" of beat 2)
   lengthBeats: number;
   velocity: number; // 0–1
 };

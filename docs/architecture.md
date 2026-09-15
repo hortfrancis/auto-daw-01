@@ -105,6 +105,16 @@ The reasons:
 - **Consistency.** Offline renders for the LLM and final exports use the engine with no UI at all, so the engine can't depend on React.
 - **Testability.** Each side can be tested on its own.
 
+### Plain Web Audio, not Tone.js
+
+Decided in spike 4. Tone.js is capable and maintained, but it runs everything through one global clock and audio context, which makes running the *same* scheduling code live and offline awkward. We need that for the "one engine" rule. With plain Web Audio:
+
+- **Scheduling is one pure function.** `notesInRange(project, fromBeat, toBeat, startTime)` in `web/audio/scheduler.ts` turns the project into timed note events.
+  - Live playback calls it every 25ms for the next 100ms of audio: the "lookahead" pattern from Chris Wilson's *A Tale of Two Clocks*.
+  - Offline rendering will call it once for the whole song.
+- **Timing is unit-tested** without a browser, including a jittery timer, looping and tempo changes.
+- **We only need a few building blocks for now:** oscillators, filters and gain envelopes. We can reconsider for richer synths and effects later.
+
 Live playback and offline rendering build the same audio graph from the same project state. To keep them identical, the engine has to be **deterministic**: every event is scheduled from the project's own timeline (never the wall clock), and anything random uses a stored seed.
 
 ## Two ways for the LLM to inspect the music
@@ -198,6 +208,6 @@ sequenceDiagram
 
 - **Browser autoplay rules.** A tab can't make sound until you've clicked it once. The UI will show an "Enable audio" button. Offline renders might not need that click, but we'll confirm.
 - **Rendering needs a tab.** Editing and symbolic inspection work without a browser, but rendered audio doesn't. Later, the server could launch a headless Chromium (e.g. with Playwright) so Claude can render on its own. It would still be the same browser engine, so the "one engine" rule holds.
-- **Multiple tabs.** All tabs show the same state, but render jobs should go to exactly one tab (e.g. the most recently focused one).
+- **Multiple tabs.** All tabs show the same state, but render jobs should go to exactly one tab (e.g. the most recently focused one). Playback has the same issue today: `play` starts every tab with audio enabled, so two tabs sound doubled.
 - **Stale renders.** Each render job carries a project version number, so a render can't mix in changes that arrived halfway through.
 - **Scope of the first version.** Synth tracks with MIDI-style note clips, a handful of effects, play/stop, a live-updating UI, symbolic inspection and rendered inspection. Sample clips and external generators come next.
